@@ -32,16 +32,14 @@ input { font-size: 20px !important; }
 """, unsafe_allow_html=True)
 
 # ==============================
-# DETECTA MODO ADMIN
+# DETECTA MODO ADMIN (CORRETO)
 # ==============================
-query_params = st.experimental_get_query_params()
-modo_admin = query_params.get("admin") == ["1"]
+modo_admin = st.query_params.get("admin") == "1"
 
 # ==============================
 # ÁREA ADMIN (OCULTA)
 # ==============================
 if modo_admin:
-
     st.title("🔐 Área do Administrador")
 
     usuario = st.text_input("Usuário")
@@ -57,7 +55,6 @@ if modo_admin:
             st.error("Credenciais inválidas")
 
     if st.session_state.get("admin_logado"):
-
         st.success("Login realizado com sucesso")
 
         arquivo = st.file_uploader(
