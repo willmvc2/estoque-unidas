@@ -33,7 +33,7 @@ input { font-size: 20px !important; }
     border-radius: 6px;
 }
 
-/* TÍTULO PRINCIPAL - APENAS "Estoque Unidas" */
+/* TÍTULO PRINCIPAL */
 .titulo-principal {
     font-size: 42px;
     font-weight: 800;
@@ -135,5 +135,17 @@ if st.button("PESQUISAR"):
     else:
         row = resultado.iloc[0]
         st.markdown("---")
-        for col in df.columns:
-            st.write(f"**{col}:** {row[col]}")
+
+        # 🔽 COLUNAS QUE O USUÁRIO VÊ
+        colunas_exibir = [
+            "Placa",
+            "Modelo",
+            "Ano",
+            "Cor",
+            "KM",
+            "Valor"
+        ]
+
+        for col in colunas_exibir:
+            if col in df.columns:
+                st.write(f"**{col}:** {row[col]}")
