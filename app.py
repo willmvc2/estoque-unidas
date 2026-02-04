@@ -136,8 +136,8 @@ if st.button("PESQUISAR"):
         row = resultado.iloc[0]
         st.markdown("---")
 
-        # 🔽 COLUNAS QUE O USUÁRIO VÊ
-       colunas_exibir = [
+# 🔽 COLUNAS QUE O USUÁRIO VÊ
+colunas_exibir = [
     "Placa",
     "Modelo",
     "Ano",
