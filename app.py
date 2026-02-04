@@ -33,7 +33,6 @@ input { font-size: 20px !important; }
     border-radius: 6px;
 }
 
-/* TÍTULO PRINCIPAL */
 .titulo-principal {
     font-size: 42px;
     font-weight: 800;
@@ -41,7 +40,6 @@ input { font-size: 20px !important; }
     margin-bottom: 20px;
 }
 
-/* TEXTO "Digite a placa do veículo" */
 .label-placa {
     font-size: 16px;
     font-weight: 600;
@@ -56,7 +54,7 @@ input { font-size: 20px !important; }
 modo_admin = st.query_params.get("admin") == "1"
 
 # ==============================
-# ÁREA ADMIN (OCULTA)
+# ÁREA ADMIN
 # ==============================
 if modo_admin:
     st.markdown(
@@ -112,13 +110,16 @@ if not os.path.exists(ARQUIVO):
     st.stop()
 
 df = pd.read_excel(ARQUIVO)
-df.columns = df.columns.str.strip()
 
-if "Placa" not in df.columns:
+# 🔧 PADRONIZA COLUNAS
+df.columns = df.columns.str.strip()
+df.columns = df.columns.str.upper()
+
+if "PLACA" not in df.columns:
     st.error("A planilha precisa ter a coluna 'Placa'.")
     st.stop()
 
-df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
+df["PLACA"] = df["PLACA"].astype(str).str.upper().str.strip()
 
 st.markdown(
     "<div class='label-placa'>Digite a placa do veículo</div>",
@@ -128,7 +129,7 @@ st.markdown(
 placa = st.text_input("Ex: ABC1D23").upper().strip()
 
 if st.button("PESQUISAR"):
-    resultado = df[df["Placa"] == placa]
+    resultado = df[df["PLACA"] == placa]
 
     if resultado.empty:
         st.error("Placa não encontrada")
@@ -136,22 +137,23 @@ if st.button("PESQUISAR"):
         row = resultado.iloc[0]
         st.markdown("---")
 
-# 🔽 COLUNAS QUE O USUÁRIO VÊ
-colunas_exibir = [
-    "PLACA",
-    "MODELO",
-    "ANO",
-    "COR",
-    "KM",
-    "VALOR FIPE",
-    "VALOR",
-    "MARGEM"
-]
-for col in colunas_exibir:
-    if col in df.columns:
-        valor = row[col]
+        # 🔽 RESULTADO CORRIGIDO (SOMENTE ISSO FOI ALTERADO)
+        colunas_exibir = [
+            "PLACA",
+            "MODELO",
+            "ANO",
+            "COR",
+            "KM",
+            "VALOR FIPE",
+            "VALOR",
+            "MARGEM"
+        ]
 
-        if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
-            valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        for col in colunas_exibir:
+            if col in df.columns:
+                valor = row[col]
 
-        st.write(f"**{col.title()}:** {valor}")
+                if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
+                    valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+                st.write(f"**{col.title()}:** {valor}")
