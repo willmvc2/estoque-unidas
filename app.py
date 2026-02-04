@@ -20,7 +20,7 @@ st.markdown("""
 
 p, span { font-size: 20px; }
 
-h1 { font-size: 40px; color: white; }
+h1 { font-size: 70px; color: white; }
 h3 { font-size: 24px; color: white; }
 
 input { font-size: 20px !important; }
