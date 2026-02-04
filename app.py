@@ -20,7 +20,6 @@ st.markdown("""
 
 p, span { font-size: 20px; }
 
-h1 { font-size: 70px; color: white; }
 h3 { font-size: 24px; color: white; }
 
 input { font-size: 20px !important; }
@@ -34,7 +33,15 @@ input { font-size: 20px !important; }
     border-radius: 6px;
 }
 
-/* APENAS O TEXTO "Digite a placa do veículo" */
+/* TÍTULO PRINCIPAL - APENAS "Estoque Unidas" */
+.titulo-principal {
+    font-size: 42px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 20px;
+}
+
+/* TEXTO "Digite a placa do veículo" */
 .label-placa {
     font-size: 16px;
     font-weight: 600;
@@ -52,7 +59,10 @@ modo_admin = st.query_params.get("admin") == "1"
 # ÁREA ADMIN (OCULTA)
 # ==============================
 if modo_admin:
-    st.title("🔐 Área do Administrador")
+    st.markdown(
+        "<div class='titulo-principal'>🔐 Área do Administrador</div>",
+        unsafe_allow_html=True
+    )
 
     if "admin" not in st.secrets:
         st.error("Secrets de administrador não configurado.")
@@ -94,13 +104,6 @@ st.markdown(
     "<div class='titulo-principal'>🚗 Estoque Unidas</div>",
     unsafe_allow_html=True
 )
-.titulo-principal {
-    font-size: 60px;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 20px;
-}
-
 
 ARQUIVO = "data/estoque.xlsx"
 
@@ -117,7 +120,6 @@ if "Placa" not in df.columns:
 
 df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
 
-# TEXTO COM TAMANHO CONTROLADO
 st.markdown(
     "<div class='label-placa'>Digite a placa do veículo</div>",
     unsafe_allow_html=True
