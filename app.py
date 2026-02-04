@@ -143,7 +143,9 @@ if st.button("PESQUISAR"):
             "Ano",
             "Cor",
             "KM",
-            "Valor"
+            "Valor Fipe",
+            "Valor",
+            "Margem",
         ]
 
         for col in colunas_exibir:
