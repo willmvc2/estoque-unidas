@@ -1,120 +1,127 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 import os
 
-# =====================================
+# ===============================
 # CONFIGURAÇÃO DA PÁGINA
-# =====================================
+# ===============================
 st.set_page_config(
     page_title="Estoque Unidas",
     page_icon="🚗",
     layout="centered"
 )
 
-# =====================================
-# ESTILO (FONTES E CORES)
-# =====================================
+# ===============================
+# ESTILO VISUAL
+# ===============================
 st.markdown("""
 <style>
 .stApp {
-    background-color: #2b59b4;
+    background-color: #1e3d7d;
     color: white;
 }
-
-/* Texto padrão */
-p, span, div {
-    font-size: 18px;
-}
-
-/* Título */
-h1 {
-    font-size: 40px;
-    color: white;
-}
-
-/* Subtítulo */
-h3 {
-    font-size: 24px;
-    color: white;
-}
-
-/* Inputs */
-input {
-    font-size: 20px !important;
-}
-
-/* Botões */
-.stButton > button {
+.stButton>button {
     background-color: #f1d064;
     color: #1e3d7d;
     font-weight: bold;
-    font-size: 18px;
     border-radius: 6px;
     width: 100%;
+}
+h1, h3 {
+    color: white;
+}
+label {
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# =====================================
+# ===============================
 # TÍTULO
-# =====================================
+# ===============================
 st.title("🚗 Estoque Unidas")
 
-# =====================================
-# CAMINHO DA PLANILHA
-# =====================================
-ARQUIVO = "data/estoque.xlsx"
+# ===============================
+# CAMINHO DO ARQUIVO
+# ===============================
+CAMINHO_ARQUIVO = "data/estoque.xlsx"
 
-# =====================================
-# VERIFICA SE EXISTE PLANILHA
-# =====================================
-if not os.path.exists(ARQUIVO):
-    st.error("Base de dados indisponível. Contate o administrador.")
+# =====================================================
+# 🔐 ÁREA DO ADMINISTRADOR
+# =====================================================
+with st.expander("🔐 Área do Administrador"):
+    senha = st.text_input("Senha do administrador", type="password")
+
+    if senha:
+        if senha == st.secrets["ADMIN_PASSWORD"]:
+            st.success("Acesso liberado")
+
+            arquivo_admin = st.file_uploader(
+                "Enviar nova planilha de estoque",
+                type=["xlsx"]
+            )
+
+            if arquivo_admin is not None:
+                os.makedirs("data", exist_ok=True)
+                with open(CAMINHO_ARQUIVO, "wb") as f:
+                    f.write(arquivo_admin.getbuffer())
+                st.success("Planilha atualizada com sucesso!")
+        else:
+            st.error("Senha incorreta")
+
+# =====================================================
+# 📊 LEITURA DA PLANILHA
+# =====================================================
+if not os.path.exists(CAMINHO_ARQUIVO):
+    st.warning("Nenhuma planilha carregada ainda.")
     st.stop()
 
-# =====================================
-# CARREGA PLANILHA
-# =====================================
 try:
-    df = pd.read_excel(ARQUIVO)
+    df = pd.read_excel(CAMINHO_ARQUIVO)
 except Exception:
-    st.error("Erro ao carregar a planilha.")
+    st.error("Erro ao ler a planilha.")
     st.stop()
 
-# =====================================
-# AJUSTES DE COLUNAS
-# =====================================
+# ===============================
+# TRATAMENTO DOS DADOS
+# ===============================
 df.columns = df.columns.str.strip()
+df['Placa'] = df['Placa'].astype(str).str.strip().str.upper()
 
-if "Placa" not in df.columns:
-    st.error("A planilha precisa ter a coluna 'Placa'.")
-    st.stop()
-
-df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
-
-# =====================================
-# BUSCA
-# =====================================
-st.subheader("Digite a placa do veículo")
-
-placa = st.text_input(
-    "Ex: ABC1D23",
-    placeholder="Digite a placa aqui"
-).upper().strip()
+# ===============================
+# CONSULTA
+# ===============================
+st.subheader("CONSULTAR VEÍCULO POR PLACA")
+placa_input = st.text_input("Digite a placa (ex: ABC1D23)").upper().strip()
 
 if st.button("PESQUISAR"):
-    resultado = df[df["Placa"] == placa]
-
-    if resultado.empty:
-        st.error("Placa não encontrada.")
+    if placa_input == "":
+        st.warning("Digite uma placa.")
     else:
-        row = resultado.iloc[0]
-        st.markdown("---")
+        resultado = df[df['Placa'] == placa_input]
 
-        for campo in df.columns:
-            valor = row[campo]
+        if not resultado.empty:
+            row = resultado.iloc[0]
 
-            if isinstance(valor, (int, float)) and campo.lower() != "km":
-                st.write(f"**{campo}:** R$ {valor:,.2f}")
+            st.markdown("---")
+            st.write(f"**Placa:** {row['Placa']}")
+            st.write(f"**Modelo:** {row['Modelo']}")
+            st.write(f"**Cor:** {row['Cor']}")
+            st.write(f"**Ano:** {row['Ano']}")
+            st.write(f"**KM:** {row['KM']}")
+
+            fipe = row['Valor FIPE']
+            if isinstance(fipe, (int, float)):
+                st.write(f"**Valor FIPE:** R$ {fipe:,.2f}")
             else:
-                st.write(f"**{campo}:** {valor}")
+                st.write(f"**Valor FIPE:** {fipe}")
+
+            valor = row['VALOR']
+            if isinstance(valor, (int, float)):
+                st.write(f"**Valor:** R$ {valor:,.2f}")
+            else:
+                st.write(f"**Valor:** {valor}")
+
+            st.write(f"**Margem:** {row['MARGEM']}")
+        else:
+            st.error("Placa não encontrada.")
