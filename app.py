@@ -17,10 +17,14 @@ st.set_page_config(
 st.markdown("""
 <style>
 .stApp { background-color: #2b59b4; color: white; }
-p, span, div { font-size: 20px; }
+
+p, span { font-size: 20px; }
+
 h1 { font-size: 40px; color: white; }
 h3 { font-size: 24px; color: white; }
+
 input { font-size: 20px !important; }
+
 .stButton > button {
     background-color: #f1d064;
     color: #1e3d7d;
@@ -28,6 +32,13 @@ input { font-size: 20px !important; }
     font-size: 18px;
     width: 100%;
     border-radius: 6px;
+}
+
+/* APENAS O TEXTO "Digite a placa do veículo" */
+.label-placa {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -43,7 +54,6 @@ modo_admin = st.query_params.get("admin") == "1"
 if modo_admin:
     st.title("🔐 Área do Administrador")
 
-    # Proteção contra secrets inexistente
     if "admin" not in st.secrets:
         st.error("Secrets de administrador não configurado.")
         st.stop()
@@ -97,7 +107,11 @@ if "Placa" not in df.columns:
 
 df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
 
-st.subheader("Digite a placa do veículo")
+# TEXTO COM TAMANHO CONTROLADO
+st.markdown(
+    "<div class='label-placa'>Digite a placa do veículo</div>",
+    unsafe_allow_html=True
+)
 
 placa = st.text_input("Ex: ABC1D23").upper().strip()
 
