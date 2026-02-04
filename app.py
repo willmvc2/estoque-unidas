@@ -2,84 +2,99 @@ import streamlit as st
 import pandas as pd
 import os
 
-# ===============================
+# =====================================
 # CONFIGURAÇÃO DA PÁGINA
-# ===============================
+# =====================================
 st.set_page_config(
     page_title="Estoque Unidas",
     page_icon="🚗",
     layout="centered"
 )
 
-# ===============================
-# ESTILOS (FONTES, CORES, BOTÕES)
-# 👉 AQUI VOCÊ MUDA O TAMANHO DA FONTE
-# ===============================
+# =====================================
+# ESTILO (FONTES E CORES)
+# =====================================
 st.markdown("""
 <style>
-/* Fundo geral */
 .stApp {
     background-color: #2b59b4;
     color: white;
 }
 
-/* TEXTO PADRÃO */
-.stMarkdown, .stText, p {
-    font-size: 10px;   /* 👈 MUDE AQUI */
+/* Texto padrão */
+p, span, div {
+    font-size: 18px;
 }
 
-/* TÍTULO PRINCIPAL */
+/* Título */
 h1 {
-    font-size: 20px;   /* 👈 MUDE AQUI */
+    font-size: 40px;
     color: white;
 }
 
-/* SUBTÍTULOS */
+/* Subtítulo */
 h3 {
-    font-size: 15px;   /* 👈 MUDE AQUI */
+    font-size: 24px;
     color: white;
 }
 
-/* CAMPOS DE TEXTO (inputs) */
+/* Inputs */
 input {
-    font-size: 20px !important;  /* 👈 MUDE AQUI */
+    font-size: 20px !important;
 }
 
-/* BOTÕES */
-.stButton>button {
+/* Botões */
+.stButton > button {
     background-color: #f1d064;
     color: #1e3d7d;
     font-weight: bold;
-    font-size: 18px;   /* 👈 MUDE AQUI */
+    font-size: 18px;
     border-radius: 6px;
     width: 100%;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ===============================
+# =====================================
 # TÍTULO
-# ===============================
+# =====================================
 st.title("🚗 Estoque Unidas")
 
-# ===============================
-# CARREGA PLANILHA SALVA NO GITHUB
-# ===============================
-CAMINHO_ARQUIVO = "data/estoque.xlsx"
+# =====================================
+# CAMINHO DA PLANILHA
+# =====================================
+ARQUIVO = "data/estoque.xlsx"
 
-if not os.path.exists(CAMINHO_ARQUIVO):
+# =====================================
+# VERIFICA SE EXISTE PLANILHA
+# =====================================
+if not os.path.exists(ARQUIVO):
     st.error("Base de dados indisponível. Contate o administrador.")
     st.stop()
 
-df = pd.read_excel(CAMINHO_ARQUIVO)
+# =====================================
+# CARREGA PLANILHA
+# =====================================
+try:
+    df = pd.read_excel(ARQUIVO)
+except Exception:
+    st.error("Erro ao carregar a planilha.")
+    st.stop()
 
-# Limpeza básica
+# =====================================
+# AJUSTES DE COLUNAS
+# =====================================
 df.columns = df.columns.str.strip()
-df["Placa"] = df["Placa"].astype(str).str.strip().str.upper()
 
-# ===============================
+if "Placa" not in df.columns:
+    st.error("A planilha precisa ter a coluna 'Placa'.")
+    st.stop()
+
+df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
+
+# =====================================
 # BUSCA
-# ===============================
+# =====================================
 st.subheader("Digite a placa do veículo")
 
 placa = st.text_input(
@@ -94,26 +109,12 @@ if st.button("PESQUISAR"):
         st.error("Placa não encontrada.")
     else:
         row = resultado.iloc[0]
-
         st.markdown("---")
-        st.write(f"**Placa:** {row['Placa']}")
-        st.write(f"**Modelo:** {row['Modelo']}")
-        st.write(f"**Cor:** {row['Cor']}")
-        st.write(f"**Ano:** {row['Ano']}")
-        st.write(f"**KM:** {row['KM']}")
 
-        fipe = row["Valor FIPE"]
-        st.write(
-            f"**Valor FIPE:** R$ {fipe:,.2f}"
-            if isinstance(fipe, (int, float))
-            else f"**Valor FIPE:** {fipe}"
-        )
+        for campo in df.columns:
+            valor = row[campo]
 
-        valor = row["VALOR"]
-        st.write(
-            f"**Valor:** R$ {valor:,.2f}"
-            if isinstance(valor, (int, float))
-            else f"**Valor:** {valor}"
-        )
-
-        st.write(f"**Margem:** {row['MARGEM']}")
+            if isinstance(valor, (int, float)) and campo.lower() != "km":
+                st.write(f"**{campo}:** R$ {valor:,.2f}")
+            else:
+                st.write(f"**{campo}:** {valor}")
