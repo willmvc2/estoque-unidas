@@ -17,7 +17,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 .stApp { background-color: #2b59b4; color: white; }
-p, span, div { font-size: 30px; }
+p, span, div { font-size: 20px; }
 h1 { font-size: 40px; color: white; }
 h3 { font-size: 24px; color: white; }
 input { font-size: 20px !important; }
