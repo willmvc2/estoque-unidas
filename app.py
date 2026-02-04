@@ -137,17 +137,23 @@ if st.button("PESQUISAR"):
         st.markdown("---")
 
         # 🔽 COLUNAS QUE O USUÁRIO VÊ
-        colunas_exibir = [
-            "Placa",
-            "Modelo",
-            "Ano",
-            "Cor",
-            "KM",
-            "Valor Fipe",
-            "Valor",
-            "Margem",
-        ]
+       colunas_exibir = [
+    "Placa",
+    "Modelo",
+    "Ano",
+    "Cor",
+    "KM",
+    "Valor Fipe",
+    "Valor",
+    "Margem"
+]
 
-        for col in colunas_exibir:
-            if col in df.columns:
-                st.write(f"**{col}:** {row[col]}")
+for col in colunas_exibir:
+    if col in df.columns:
+        valor = row[col]
+
+        # Formata valores monetários
+        if col.lower() in ["valor", "valor fipe"] and isinstance(valor, (int, float)):
+            valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+        st.write(f"**{col}:** {valor}")
