@@ -90,7 +90,17 @@ if modo_admin:
 # ==============================
 # USUÁRIO COMUM
 # ==============================
-st.title("🚗 Estoque Unidas")
+st.markdown(
+    "<div class='titulo-principal'>🚗 Estoque Unidas</div>",
+    unsafe_allow_html=True
+)
+.titulo-principal {
+    font-size: 60px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 20px;
+}
+
 
 ARQUIVO = "data/estoque.xlsx"
 
