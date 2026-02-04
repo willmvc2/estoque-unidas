@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # ==============================
-# ESTILO
+# ESTILO (FONTES E CORES)
 # ==============================
 st.markdown("""
 <style>
@@ -27,12 +27,13 @@ input { font-size: 20px !important; }
     font-weight: bold;
     font-size: 18px;
     width: 100%;
+    border-radius: 6px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# DETECTA MODO ADMIN (CORRETO)
+# DETECTA MODO ADMIN (?admin=1)
 # ==============================
 modo_admin = st.query_params.get("admin") == "1"
 
@@ -42,17 +43,22 @@ modo_admin = st.query_params.get("admin") == "1"
 if modo_admin:
     st.title("🔐 Área do Administrador")
 
+    # Proteção contra secrets inexistente
+    if "admin" not in st.secrets:
+        st.error("Secrets de administrador não configurado.")
+        st.stop()
+
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
     if st.button("Entrar"):
         if (
-            usuario == st.secrets["admin"]["user"]
-            and senha == st.secrets["admin"]["password"]
+            usuario == st.secrets["admin"].get("user")
+            and senha == st.secrets["admin"].get("password")
         ):
             st.session_state["admin_logado"] = True
         else:
-            st.error("Credenciais inválidas")
+            st.error("Usuário ou senha inválidos")
 
     if st.session_state.get("admin_logado"):
         st.success("Login realizado com sucesso")
@@ -79,11 +85,16 @@ st.title("🚗 Estoque Unidas")
 ARQUIVO = "data/estoque.xlsx"
 
 if not os.path.exists(ARQUIVO):
-    st.error("Base de dados indisponível.")
+    st.error("Base de dados indisponível. Contate o administrador.")
     st.stop()
 
 df = pd.read_excel(ARQUIVO)
 df.columns = df.columns.str.strip()
+
+if "Placa" not in df.columns:
+    st.error("A planilha precisa ter a coluna 'Placa'.")
+    st.stop()
+
 df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
 
 st.subheader("Digite a placa do veículo")
