@@ -1,117 +1,119 @@
 import streamlit as st
 import pandas as pd
-import hashlib
+import os
 
-# ======================
+# ===============================
 # CONFIGURAÇÃO DA PÁGINA
-# ======================
+# ===============================
 st.set_page_config(
     page_title="Estoque Unidas",
     page_icon="🚗",
     layout="centered"
 )
 
-# ======================
-# FUNÇÕES AUXILIARES
-# ======================
-def hash_senha(senha):
-    return hashlib.sha256(senha.encode()).hexdigest()
-
-def admin_logado():
-    return st.session_state.get("admin", False)
-
-# ======================
-# IDENTIFICA SE É ADMIN
-# ======================
-query_params = st.query_params
-modo_admin = query_params.get("admin") == "1"
-
-# ======================
-# ESTILO
-# ======================
+# ===============================
+# ESTILOS (FONTES, CORES, BOTÕES)
+# 👉 AQUI VOCÊ MUDA O TAMANHO DA FONTE
+# ===============================
 st.markdown("""
 <style>
+/* Fundo geral */
 .stApp {
-    background-color: #1f3b78;
+    background-color: #2b59b4;
     color: white;
 }
-button {
-    background-color: #f1d064 !important;
-    color: #1f3b78 !important;
+
+/* TEXTO PADRÃO */
+.stMarkdown, .stText, p {
+    font-size: 10px;   /* 👈 MUDE AQUI */
+}
+
+/* TÍTULO PRINCIPAL */
+h1 {
+    font-size: 20px;   /* 👈 MUDE AQUI */
+    color: white;
+}
+
+/* SUBTÍTULOS */
+h3 {
+    font-size: 15px;   /* 👈 MUDE AQUI */
+    color: white;
+}
+
+/* CAMPOS DE TEXTO (inputs) */
+input {
+    font-size: 20px !important;  /* 👈 MUDE AQUI */
+}
+
+/* BOTÕES */
+.stButton>button {
+    background-color: #f1d064;
+    color: #1e3d7d;
     font-weight: bold;
+    font-size: 18px;   /* 👈 MUDE AQUI */
+    border-radius: 6px;
+    width: 100%;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ======================================================
-# ===================== MODO ADMIN =====================
-# ======================================================
-if modo_admin:
+# ===============================
+# TÍTULO
+# ===============================
+st.title("🚗 Estoque Unidas")
 
-    st.title("🔐 Administração - Estoque Unidas")
+# ===============================
+# CARREGA PLANILHA SALVA NO GITHUB
+# ===============================
+CAMINHO_ARQUIVO = "data/estoque.xlsx"
 
-    # LOGIN
-    if not admin_logado():
-        st.subheader("Login do Administrador")
+if not os.path.exists(CAMINHO_ARQUIVO):
+    st.error("Base de dados indisponível. Contate o administrador.")
+    st.stop()
 
-        usuario = st.text_input("Usuário")
-        senha = st.text_input("Senha", type="password")
+df = pd.read_excel(CAMINHO_ARQUIVO)
 
-        if st.button("Entrar"):
-            if (
-                usuario == st.secrets["admin"]["user"]
-                and hash_senha(senha) == st.secrets["admin"]["password"]
-            ):
-                st.session_state.admin = True
-                st.success("Login realizado com sucesso")
-                st.rerun()
-            else:
-                st.error("Usuário ou senha incorretos")
+# Limpeza básica
+df.columns = df.columns.str.strip()
+df["Placa"] = df["Placa"].astype(str).str.strip().str.upper()
 
-    # ÁREA ADMIN
+# ===============================
+# BUSCA
+# ===============================
+st.subheader("Digite a placa do veículo")
+
+placa = st.text_input(
+    "Ex: ABC1D23",
+    placeholder="Digite a placa aqui"
+).upper().strip()
+
+if st.button("PESQUISAR"):
+    resultado = df[df["Placa"] == placa]
+
+    if resultado.empty:
+        st.error("Placa não encontrada.")
     else:
-        st.success("Você está logado como administrador")
+        row = resultado.iloc[0]
 
-        arquivo = st.file_uploader(
-            "Enviar planilha de estoque (.xlsx)",
-            type=["xlsx"]
+        st.markdown("---")
+        st.write(f"**Placa:** {row['Placa']}")
+        st.write(f"**Modelo:** {row['Modelo']}")
+        st.write(f"**Cor:** {row['Cor']}")
+        st.write(f"**Ano:** {row['Ano']}")
+        st.write(f"**KM:** {row['KM']}")
+
+        fipe = row["Valor FIPE"]
+        st.write(
+            f"**Valor FIPE:** R$ {fipe:,.2f}"
+            if isinstance(fipe, (int, float))
+            else f"**Valor FIPE:** {fipe}"
         )
 
-        if arquivo:
-            df = pd.read_excel(arquivo)
-            df.to_csv("estoque.csv", index=False)
-            st.success("Planilha salva com sucesso")
+        valor = row["VALOR"]
+        st.write(
+            f"**Valor:** R$ {valor:,.2f}"
+            if isinstance(valor, (int, float))
+            else f"**Valor:** {valor}"
+        )
 
-        if st.button("Sair"):
-            st.session_state.admin = False
-            st.rerun()
-
-# ======================================================
-# =================== MODO USUÁRIO =====================
-# ======================================================
-else:
-    st.title("🚗 Estoque Unidas")
-    st.subheader("Consultar veículo por placa")
-
-    placa = st.text_input("Digite a placa (ex: ABC1D23)").upper().strip()
-
-    if st.button("Pesquisar"):
-        try:
-            df = pd.read_csv("estoque.csv")
-            df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
-
-            resultado = df[df["Placa"] == placa]
-
-            if resultado.empty:
-                st.error("Placa não encontrada")
-            else:
-                row = resultado.iloc[0]
-                st.markdown("---")
-                st.write(f"**Placa:** {row['Placa']}")
-                st.write(f"**Modelo:** {row['Modelo']}")
-                st.write(f"**Ano:** {row['Ano']}")
-                st.write(f"**Cor:** {row['Cor']}")
-                st.write(f"**Valor:** R$ {row['VALOR']:,.2f}")
-
-        except Exception:
-            st.warning("Base de dados ainda não carregada")
+        st.write(f"**Margem:** {row['MARGEM']}")
