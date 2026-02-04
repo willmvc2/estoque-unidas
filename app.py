@@ -1,127 +1,117 @@
 import streamlit as st
 import pandas as pd
-import os
+import hashlib
 
-# ===============================
+# ======================
 # CONFIGURAÇÃO DA PÁGINA
-# ===============================
+# ======================
 st.set_page_config(
     page_title="Estoque Unidas",
     page_icon="🚗",
     layout="centered"
 )
 
-# ===============================
-# ESTILO VISUAL
-# ===============================
+# ======================
+# FUNÇÕES AUXILIARES
+# ======================
+def hash_senha(senha):
+    return hashlib.sha256(senha.encode()).hexdigest()
+
+def admin_logado():
+    return st.session_state.get("admin", False)
+
+# ======================
+# IDENTIFICA SE É ADMIN
+# ======================
+query_params = st.query_params
+modo_admin = query_params.get("admin") == "1"
+
+# ======================
+# ESTILO
+# ======================
 st.markdown("""
 <style>
 .stApp {
-    background-color: #1e3d7d;
+    background-color: #1f3b78;
     color: white;
 }
-.stButton>button {
-    background-color: #f1d064;
-    color: #1e3d7d;
+button {
+    background-color: #f1d064 !important;
+    color: #1f3b78 !important;
     font-weight: bold;
-    border-radius: 6px;
-    width: 100%;
-}
-h1, h3 {
-    color: white;
-}
-label {
-    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ===============================
-# TÍTULO
-# ===============================
-st.title("🚗 Estoque Unidas")
+# ======================================================
+# ===================== MODO ADMIN =====================
+# ======================================================
+if modo_admin:
 
-# ===============================
-# CAMINHO DO ARQUIVO
-# ===============================
-CAMINHO_ARQUIVO = "data/estoque.xlsx"
+    st.title("🔐 Administração - Estoque Unidas")
 
-# =====================================================
-# 🔐 ÁREA DO ADMINISTRADOR
-# =====================================================
-with st.expander("🔐 Área do Administrador"):
-    senha = st.text_input("Senha do administrador", type="password")
+    # LOGIN
+    if not admin_logado():
+        st.subheader("Login do Administrador")
 
-    if senha:
-        if senha == st.secrets["ADMIN_PASSWORD"]:
-            st.success("Acesso liberado")
+        usuario = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
 
-            arquivo_admin = st.file_uploader(
-                "Enviar nova planilha de estoque",
-                type=["xlsx"]
-            )
+        if st.button("Entrar"):
+            if (
+                usuario == st.secrets["admin"]["user"]
+                and hash_senha(senha) == st.secrets["admin"]["password"]
+            ):
+                st.session_state.admin = True
+                st.success("Login realizado com sucesso")
+                st.rerun()
+            else:
+                st.error("Usuário ou senha incorretos")
 
-            if arquivo_admin is not None:
-                os.makedirs("data", exist_ok=True)
-                with open(CAMINHO_ARQUIVO, "wb") as f:
-                    f.write(arquivo_admin.getbuffer())
-                st.success("Planilha atualizada com sucesso!")
-        else:
-            st.error("Senha incorreta")
-
-# =====================================================
-# 📊 LEITURA DA PLANILHA
-# =====================================================
-if not os.path.exists(CAMINHO_ARQUIVO):
-    st.warning("Nenhuma planilha carregada ainda.")
-    st.stop()
-
-try:
-    df = pd.read_excel(CAMINHO_ARQUIVO)
-except Exception:
-    st.error("Erro ao ler a planilha.")
-    st.stop()
-
-# ===============================
-# TRATAMENTO DOS DADOS
-# ===============================
-df.columns = df.columns.str.strip()
-df['Placa'] = df['Placa'].astype(str).str.strip().str.upper()
-
-# ===============================
-# CONSULTA
-# ===============================
-st.subheader("CONSULTAR VEÍCULO POR PLACA")
-placa_input = st.text_input("Digite a placa (ex: ABC1D23)").upper().strip()
-
-if st.button("PESQUISAR"):
-    if placa_input == "":
-        st.warning("Digite uma placa.")
+    # ÁREA ADMIN
     else:
-        resultado = df[df['Placa'] == placa_input]
+        st.success("Você está logado como administrador")
 
-        if not resultado.empty:
-            row = resultado.iloc[0]
+        arquivo = st.file_uploader(
+            "Enviar planilha de estoque (.xlsx)",
+            type=["xlsx"]
+        )
 
-            st.markdown("---")
-            st.write(f"**Placa:** {row['Placa']}")
-            st.write(f"**Modelo:** {row['Modelo']}")
-            st.write(f"**Cor:** {row['Cor']}")
-            st.write(f"**Ano:** {row['Ano']}")
-            st.write(f"**KM:** {row['KM']}")
+        if arquivo:
+            df = pd.read_excel(arquivo)
+            df.to_csv("estoque.csv", index=False)
+            st.success("Planilha salva com sucesso")
 
-            fipe = row['Valor FIPE']
-            if isinstance(fipe, (int, float)):
-                st.write(f"**Valor FIPE:** R$ {fipe:,.2f}")
+        if st.button("Sair"):
+            st.session_state.admin = False
+            st.rerun()
+
+# ======================================================
+# =================== MODO USUÁRIO =====================
+# ======================================================
+else:
+    st.title("🚗 Estoque Unidas")
+    st.subheader("Consultar veículo por placa")
+
+    placa = st.text_input("Digite a placa (ex: ABC1D23)").upper().strip()
+
+    if st.button("Pesquisar"):
+        try:
+            df = pd.read_csv("estoque.csv")
+            df["Placa"] = df["Placa"].astype(str).str.upper().str.strip()
+
+            resultado = df[df["Placa"] == placa]
+
+            if resultado.empty:
+                st.error("Placa não encontrada")
             else:
-                st.write(f"**Valor FIPE:** {fipe}")
+                row = resultado.iloc[0]
+                st.markdown("---")
+                st.write(f"**Placa:** {row['Placa']}")
+                st.write(f"**Modelo:** {row['Modelo']}")
+                st.write(f"**Ano:** {row['Ano']}")
+                st.write(f"**Cor:** {row['Cor']}")
+                st.write(f"**Valor:** R$ {row['VALOR']:,.2f}")
 
-            valor = row['VALOR']
-            if isinstance(valor, (int, float)):
-                st.write(f"**Valor:** R$ {valor:,.2f}")
-            else:
-                st.write(f"**Valor:** {valor}")
-
-            st.write(f"**Margem:** {row['MARGEM']}")
-        else:
-            st.error("Placa não encontrada.")
+        except Exception:
+            st.warning("Base de dados ainda não carregada")
