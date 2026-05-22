@@ -144,7 +144,7 @@ if st.button("PESQUISAR"):
             "ANO",
             "COR",
             "KM",
-            "VALOR FIPE",
+            "FIPE",
             "VALOR",
             "MARGEM"
         ]
@@ -153,7 +153,7 @@ if st.button("PESQUISAR"):
             if col in df.columns:
                 valor = row[col]
 
-                if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
+                if col in ["VALOR", "FIPE"] and isinstance(valor, (int, float)):
                     valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
                 st.write(f"**{col.title()}:** {valor}")
