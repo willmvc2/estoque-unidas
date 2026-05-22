@@ -184,7 +184,7 @@ if st.button("PESQUISAR"):
                 if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
                     valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-                texto_copia += f"{col.title()}: {valor}\n"
+                texto_copia += f"*{col.title()}:* {valor}\n\n"
 
         # ==============================
         # BOTÃO DE COPIAR
