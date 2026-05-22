@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import streamlit.components.v1 as components
 
 # ==============================
 # CONFIGURAÇÃO DA PÁGINA
@@ -115,6 +116,10 @@ df = pd.read_excel(ARQUIVO)
 df.columns = df.columns.str.strip()
 df.columns = df.columns.str.upper()
 
+# 🔧 Corrige nome FIPE automaticamente
+if "FIPE" in df.columns:
+    df.rename(columns={"FIPE": "VALOR FIPE"}, inplace=True)
+
 if "PLACA" not in df.columns:
     st.error("A planilha precisa ter a coluna 'Placa'.")
     st.stop()
@@ -137,14 +142,13 @@ if st.button("PESQUISAR"):
         row = resultado.iloc[0]
         st.markdown("---")
 
-        # 🔽 RESULTADO CORRIGIDO (SOMENTE ISSO FOI ALTERADO)
         colunas_exibir = [
             "PLACA",
             "MODELO",
             "ANO",
             "COR",
             "KM",
-            "FIPE",
+            "VALOR FIPE",
             "VALOR",
             "MARGEM"
         ]
@@ -153,7 +157,64 @@ if st.button("PESQUISAR"):
             if col in df.columns:
                 valor = row[col]
 
-                if col in ["VALOR", "FIPE"] and isinstance(valor, (int, float)):
+                if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
                     valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
                 st.write(f"**{col.title()}:** {valor}")
+
+        # ==============================
+        # TEXTO PARA COPIAR
+        # ==============================
+        texto_copia = ""
+
+        campos_copia = [
+            "MODELO",
+            "ANO",
+            "COR",
+            "KM",
+            "VALOR FIPE",
+            "VALOR",
+            "MARGEM"
+        ]
+
+        for col in campos_copia:
+            if col in df.columns:
+                valor = row[col]
+
+                if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
+                    valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+                texto_copia += f"{col.title()}: {valor}\\n"
+
+        st.markdown("### 📋 Copiar dados")
+
+        # ==============================
+        # BOTÃO DE COPIAR REAL
+        # ==============================
+        botao_copiar = f"""
+        <textarea id="texto" style="opacity:0; position:absolute;">{texto_copia}</textarea>
+
+        <button onclick="copiarTexto()" style="
+            background-color:#f1d064;
+            color:#1e3d7d;
+            font-weight:bold;
+            font-size:18px;
+            width:100%;
+            border:none;
+            border-radius:6px;
+            padding:10px;
+        ">
+        📋 COPIAR DADOS
+        </button>
+
+        <script>
+        function copiarTexto() {{
+            var copyText = document.getElementById("texto");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Copiado com sucesso!");
+        }}
+        </script>
+        """
+
+        components.html(botao_copiar, height=100)
