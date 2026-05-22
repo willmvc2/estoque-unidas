@@ -184,15 +184,15 @@ if st.button("PESQUISAR"):
                 if col in ["VALOR", "VALOR FIPE"] and isinstance(valor, (int, float)):
                     valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-                texto_copia += f"{col.title()}: {valor}\\n"
-
-        st.markdown("### 📋 Copiar dados")
+                texto_copia += f"{col.title()}: {valor}\n"
 
         # ==============================
-        # BOTÃO DE COPIAR REAL
+        # BOTÃO DE COPIAR
         # ==============================
         botao_copiar = f"""
-        <textarea id="texto" style="opacity:0; position:absolute;">{texto_copia}</textarea>
+        <textarea id="texto" style="position:absolute; left:-9999px;">
+{texto_copia}
+        </textarea>
 
         <button onclick="copiarTexto()" style="
             background-color:#f1d064;
@@ -204,13 +204,14 @@ if st.button("PESQUISAR"):
             border-radius:6px;
             padding:10px;
         ">
-        📋 COPIAR DADOS
+        COPIAR
         </button>
 
         <script>
         function copiarTexto() {{
             var copyText = document.getElementById("texto");
             copyText.select();
+            copyText.setSelectionRange(0, 99999);
             document.execCommand("copy");
             alert("Copiado com sucesso!");
         }}
